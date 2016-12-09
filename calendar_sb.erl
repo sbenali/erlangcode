@@ -4,7 +4,7 @@
 
 -import(string,[substr/3, to_integer/1]).
 
--export([get_month_info/2, get_month_days/4, get_utc_now/0, day_name/1, is_weekend/1, get_business_calendar/1,
+-export([get_month_info/2, get_month_days/5, get_utc_now/0, day_name/1, is_weekend/1, get_business_calendar/1,
           get_public_holidays/0, is_public_holiday/2]).
 
 -define(MONTHS, [{1,"Jan","January",31},
@@ -44,7 +44,7 @@ get_month_info(M,Yr) ->
       end
   end.
 
-get_month_days(Mnth,Yr, IncludeWeekends, IncludePublicHolidays)->
+get_month_days(Mnth,Yr, IncludeWeekends, IncludePublicHolidays, Hols)->
   Fdow = fun(X)->calendar:day_of_the_week(X) end,
   Ftoutc = fun(X)->calendar:local_time_to_universal_time(X) end,
   {_,_,_,DaysInMonth} = get_month_info(Mnth,Yr),
@@ -56,7 +56,6 @@ get_month_days(Mnth,Yr, IncludeWeekends, IncludePublicHolidays)->
         true ->
           [{D,T,{dayofweek,Fdow(D),day_name(Fdow(D))}}|| {D,T}<-Utc];
         false ->
-          Hols=get_public_holidays(),
           [{D,T,{dayofweek,Fdow(D),day_name(Fdow(D))}}|| {D,T}<-Utc, is_public_holiday(D,Hols)=:=false]
       end;
     false ->
@@ -65,7 +64,6 @@ get_month_days(Mnth,Yr, IncludeWeekends, IncludePublicHolidays)->
           [{D,T,{dayofweek,Fdow(D),day_name(Fdow(D))}}|| {D,T}<-Utc, is_weekend({D,T})=:=false];
         false ->
           L1 = [{D,T,{dayofweek,Fdow(D),day_name(Fdow(D))}}|| {D,T}<-Utc, is_weekend({D,T})=:=false],
-          Hols=get_public_holidays(),
           [{R,R2,R3} || {R,R2,R3} <- L1, is_public_holiday({R,{0,0,0}},Hols)=:=false]
       end
   end.
@@ -96,7 +94,8 @@ is_weekend(D)->
   end.
 
 get_business_calendar(Yr)->
-  U = [get_month_days(X,Yr,false,false) || X <- lists:seq(1,12)],
+  Hols=get_public_holidays(),
+  U = [get_month_days(X,Yr,false,false,Hols) || X <- lists:seq(1,12)],
   U.
 
 get_public_holidays()->
