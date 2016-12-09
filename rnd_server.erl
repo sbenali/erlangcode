@@ -10,13 +10,16 @@
 -author("samir").
 
 -behaviour(gen_server).
+-import(rand,[uniform/1]).
 
 %% API
 -export([start_link/0,
   generate_first_names/1,
   generate_last_names/1,
   generate_full_names/1,
-  generate_business_dates/1, generate_person/1]).
+  generate_random_date/0,
+  generate_business_dates/1,
+  generate_person/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -51,6 +54,9 @@ generate_business_dates(Yr)->
 generate_person(Max)->
   gen_server:call(?MODULE, {generate_person, Max}).
 
+generate_random_date()->
+  gen_server:call(?MODULE, {generate_date}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -72,6 +78,8 @@ handle_call({generate_dt,N},_From, State)->
   {reply, calendar_sb:get_business_calendar(N), State};
 handle_call({generate_person,N},_From, State)->
   {reply,gen_person(N),State};
+handle_call({generate_date},_From, State)->
+  {reply,gen_date(),State};
 handle_call(_Request, _From, State) ->
   {reply, ok, State}.
 
@@ -94,7 +102,7 @@ gen_person(M)->
   Tl = erlang:length(Towns),
   io:format("No. towns ~p~n",[Tl]),
   People = gen_full(M),
-  Persons = [#{fullname => string:join([Y,X], ", "), age => random:uniform(99), town => lists:nth(random:uniform(Tl),Towns)}||{X,Y}<-People],
+  Persons = [#{fullname => string:join([Y,X], ", "), age => uniform(99), town => lists:nth(uniform(Tl),Towns)}||{X,Y}<-People],
   %%sort by fullname, if use sort/1 then it will sort by age
   SortedPersons = lists:sort(fun(M1, M2)-> maps:get(fullname,M1) < maps:get(fullname,M2)  end, Persons),
   SortedPersons.
@@ -153,4 +161,6 @@ read_and_save_csv(P,K)->
   end.
 
 
-
+gen_date() ->
+  Yrs = lists:seq(1900,2020),
+  {{lists:nth(uniform(121),Yrs),uniform(12), uniform(28)},{uniform(24),uniform(60),uniform(60)}}.
