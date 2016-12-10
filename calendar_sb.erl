@@ -4,8 +4,8 @@
 
 -import(string,[substr/3, to_integer/1]).
 
--export([get_month_info/2, get_month_days/5, get_utc_now/0, day_name/1, is_weekend/1, get_business_calendar/1,
-          get_public_holidays/0, is_public_holiday/2]).
+-export([get_month_info/2, get_utc_now/0, day_name/1, is_weekend/1, get_business_calendar/1,
+  get_public_holidays/0, is_public_holiday/2, get_full_calendar/1, get_full_month/2]).
 
 -define(MONTHS, [{1,"Jan","January",31},
                  {2,"Feb","Feburary",0},{3,"Mar","March",31},{4,"Apr","April",30},
@@ -98,7 +98,16 @@ get_business_calendar(Yr)->
   U = [get_month_days(X,Yr,false,false,Hols) || X <- lists:seq(1,12)],
   U.
 
+get_full_calendar(Yr)->
+  [get_month_days(X,Yr,true,true,[]) || X <- lists:seq(1,12)].
+
+
+get_full_month(M,Yr)->
+  get_month_days(M,Yr,true,true,[]).
+
+
 get_public_holidays()->
+
   inets:start(),
   ssl:start(),
   {ok, {{_, 200, _}, _, Body}} = httpc:request(get, {"https://www.gov.uk/bank-holidays/england-and-wales.ics", []}, [], []),
